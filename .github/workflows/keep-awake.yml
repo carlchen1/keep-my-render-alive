@@ -11,6 +11,6 @@ jobs:
     steps:
       - name: 🚀 访问我的 Render 应用
         run: |
-          curl -f -s -o /dev/null -w "Status: %{http_code}, Duration: %{time_total}s\n" "https://your-app-name.onrender.com"
+          curl -f -s -o /dev/null -w "Status: %{http_code}, Duration: %{time_total}s\n" "https://basketball-match-1.onrender.com"
         env:
           APP_URL: https://basketball-match-1.onrender.com  # 你可以在这里定义变量（可选）
