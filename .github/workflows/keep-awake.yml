@@ -1,16 +1,50 @@
-name: Keep Render Alive
+name: Keep Render Apps Alive
 
 on:
-  workflow_dispatch:        # 允许手动触发
   schedule:
-    - cron: '*/10 * * * *'  # 每10分钟执行一次（UTC时间）
+    - cron: '*/10 * * * *'  # 每10分钟（符合免费计划限制）
+  workflow_dispatch:
+
+env:
+  RENDER_APPS: |
+    https://basketball-match-1.onrender.com
+    https://score-ahze.onrender.com
 
 jobs:
-  ping:
+  keep-alive:
     runs-on: ubuntu-latest
+    timeout-minutes: 5  # 设置超时时间
+    
     steps:
-      - name: 🚀 访问我的 Render 应用
+      - name: 🚀 启动保活任务
         run: |
-          curl -f -s -o /dev/null -w "Status: %{http_code}, Duration: %{time_total}s\n" "https://basketball-match-1.onrender.com"
-        env:
-          APP_URL: https://basketball-match-1.onrender.com  # 你可以在这里定义变量（可选）
+          echo "开始时间: $(date)"
+          echo "GitHub Actions Runner IP: $(curl -s ifconfig.me)"
+          echo "========================================"
+          
+          # 读取应用列表
+          IFS=$'\n' read -d '' -ra apps <<< "$RENDER_APPS"
+          
+          for app in "${apps[@]}"; do
+            if [ -n "$app" ]; then
+              echo "🌐 访问: $app"
+              
+              # 第一次访问（处理冷启动）
+              echo "  第一次请求（冷启动可能较慢）..."
+              time_1=$(curl -f -s -o /dev/null -w "%{time_total}" --max-time 60 "$app" 2>/dev/null || echo "timeout")
+              
+              sleep 3  # 等待应用完全启动
+              
+              # 第二次访问（正常响应）
+              echo "  第二次请求（预热后）..."
+              time_2=$(curl -f -s -o /dev/null -w "%{time_total}" --max-time 30 "$app" 2>/dev/null || echo "timeout")
+              
+              echo "  响应时间: 首次=${time_1}s, 预热=${time_2}s"
+              echo "  ✅ 完成"
+              echo "---"
+            fi
+          done
+          
+          echo "========================================"
+          echo "结束时间: $(date)"
+          echo "🎉 所有 Render 应用保活任务完成"
