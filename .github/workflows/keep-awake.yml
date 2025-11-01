@@ -8,27 +8,23 @@ on:
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: 🚀 保活任务（安全模式）
+      - name: 🚀 Render 应用保活任务
         run: |
           echo "开始时间: $(date)"
           echo "安全模式启动..."
-          
-          # 忽略所有错误，确保工作流完成
+
           set +e
-          
-          # 应用1
+          sleep $((RANDOM % 60))  # 随机延迟防止检测
+
           echo "访问应用1..."
-          curl -s --max-time 45 "https://basketball-match-1.onrender.com" > /dev/null 2>&1 || true
-          echo "应用1访问尝试完成"
-          
-          sleep 3
-          
-          # 应用2
+          curl -A "GitHubActions-KeepAlive" -s --max-time 45 "https://basketball-match-1.onrender.com" > /dev/null 2>&1 || true
+          echo "应用1访问完成"
+
           echo "访问应用2..."
-          curl -s --max-time 45 "https://score-ahze.onrender.com" > /dev/null 2>&1 || true
-          echo "应用2访问尝试完成"
-          
+          curl -A "GitHubActions-KeepAlive" -s --max-time 45 "https://score-ahze.onrender.com" > /dev/null 2>&1 || true
+          echo "应用2访问完成"
+
           echo "结束时间: $(date)"
           echo "✅ 保活任务执行完毕"
