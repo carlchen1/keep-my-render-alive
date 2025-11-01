@@ -5,11 +5,6 @@ on:
     - cron: '*/10 * * * *'
   workflow_dispatch:
 
-env:
-  RENDER_APPS: |
-    https://basketball-match-1.onrender.com
-    https://score-ahze.onrender.com
-
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
@@ -18,53 +13,40 @@ jobs:
     steps:
       - name: 🚀 启动保活任务
         run: |
-          set +e  # 允许命令失败继续执行
-          
           echo "开始时间: $(date)"
           echo "GitHub Actions Runner IP: $(curl -s ifconfig.me)"
           echo "========================================"
           
-          # 读取应用列表
-          apps=($(echo "$RENDER_APPS" | tr '\n' ' '))
+          # 直接在脚本中定义数组，避免环境变量解析问题
+          apps=(
+            "https://basketball-match-1.onrender.com"
+            "https://score-ahze.onrender.com"
+          )
           
           for app in "${apps[@]}"; do
-            if [ -n "$app" ]; then
-              echo "🌐 访问: $app"
-              
-              # 第一次访问 - 使用更简单的curl命令
-              echo "  第一次请求..."
-              start_time=$(date +%s)
-              curl -s --max-time 60 "$app" > /dev/null 2>&1
-              curl_exit_code=$?
-              end_time=$(date +%s)
-              duration=$((end_time - start_time))
-              
-              if [ $curl_exit_code -eq 0 ]; then
-                echo "  ✅ 第一次请求成功，耗时: ${duration}s"
-              else
-                echo "  ⚠️ 第一次请求可能超时或失败，退出码: $curl_exit_code"
-              fi
-              
-              sleep 2
-              
-              # 第二次访问
-              echo "  第二次请求..."
-              start_time=$(date +%s)
-              curl -s --max-time 30 "$app" > /dev/null 2>&1
-              curl_exit_code=$?
-              end_time=$(date +%s)
-              duration=$((end_time - start_time))
-              
-              if [ $curl_exit_code -eq 0 ]; then
-                echo "  ✅ 第二次请求成功，耗时: ${duration}s"
-              else
-                echo "  ⚠️ 第二次请求可能超时或失败，退出码: $curl_exit_code"
-              fi
-              
-              echo "---"
+            echo "🌐 访问: $app"
+            
+            # 第一次访问
+            echo "  第一次请求..."
+            if curl -s --max-time 60 "$app" > /dev/null 2>&1; then
+              echo "  ✅ 第一次请求成功"
+            else
+              echo "  ⚠️ 第一次请求超时（可能冷启动中）"
             fi
+            
+            sleep 2
+            
+            # 第二次访问
+            echo "  第二次请求..."
+            if curl -s --max-time 30 "$app" > /dev/null 2>&1; then
+              echo "  ✅ 第二次请求成功"
+            else
+              echo "  ⚠️ 第二次请求超时"
+            fi
+            
+            echo "---"
           done
           
           echo "========================================"
           echo "结束时间: $(date)"
-          echo "🎉 保活任务执行完成（允许部分失败）"
+          echo "🎉 所有 Render 应用保活任务完成"
