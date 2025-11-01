@@ -8,45 +8,27 @@ on:
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     
     steps:
-      - name: 🚀 启动保活任务
+      - name: 🚀 保活任务（安全模式）
         run: |
           echo "开始时间: $(date)"
-          echo "GitHub Actions Runner IP: $(curl -s ifconfig.me)"
-          echo "========================================"
+          echo "安全模式启动..."
           
-          # 直接在脚本中定义数组，避免环境变量解析问题
-          apps=(
-            "https://basketball-match-1.onrender.com"
-            "https://score-ahze.onrender.com"
-          )
+          # 忽略所有错误，确保工作流完成
+          set +e
           
-          for app in "${apps[@]}"; do
-            echo "🌐 访问: $app"
-            
-            # 第一次访问
-            echo "  第一次请求..."
-            if curl -s --max-time 60 "$app" > /dev/null 2>&1; then
-              echo "  ✅ 第一次请求成功"
-            else
-              echo "  ⚠️ 第一次请求超时（可能冷启动中）"
-            fi
-            
-            sleep 2
-            
-            # 第二次访问
-            echo "  第二次请求..."
-            if curl -s --max-time 30 "$app" > /dev/null 2>&1; then
-              echo "  ✅ 第二次请求成功"
-            else
-              echo "  ⚠️ 第二次请求超时"
-            fi
-            
-            echo "---"
-          done
+          # 应用1
+          echo "访问应用1..."
+          curl -s --max-time 45 "https://basketball-match-1.onrender.com" > /dev/null 2>&1 || true
+          echo "应用1访问尝试完成"
           
-          echo "========================================"
+          sleep 3
+          
+          # 应用2
+          echo "访问应用2..."
+          curl -s --max-time 45 "https://score-ahze.onrender.com" > /dev/null 2>&1 || true
+          echo "应用2访问尝试完成"
+          
           echo "结束时间: $(date)"
-          echo "🎉 所有 Render 应用保活任务完成"
+          echo "✅ 保活任务执行完毕"
